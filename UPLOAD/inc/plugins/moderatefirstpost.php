@@ -15,6 +15,7 @@ if(!defined("IN_MYBB"))
 
 if(defined('IN_ADMINCP'))
 {
+    $plugins->add_hook("admin_config_plugins_deactivate_commit", 'moderatefirstpost_delete_plugin');
     $plugins->add_hook("admin_config_settings_begin",'moderatefirstpost_settings_page');
     $plugins->add_hook("admin_page_output_footer",'moderatefirstpost_settings_peeker');
 }
@@ -30,7 +31,7 @@ else
 
 function moderatefirstpost_info()
 {
-    global $db, $plugins_cache, $lang;
+    global $mybb, $db, $plugins_cache, $lang;
     $lang->load('moderatefirstpost', true);
 
     $info = array(
@@ -39,7 +40,7 @@ function moderatefirstpost_info()
         "website"       => "https://github.com/SvePu/MyBB-Moderate-First-Post",
         "author"        => "SvePu",
         "authorsite"    => "https://github.com/SvePu",
-        "version"       => "1.1",
+        "version"       => "1.2",
         "codename"      => "moderatefirstpost",
         "compatibility" => "18*"
     );
@@ -50,8 +51,15 @@ function moderatefirstpost_info()
         $settings_group = $db->fetch_array($gid_result);
         if(!empty($settings_group['gid']))
         {
-            $info['description'] = "<span class=\"float_right\"><a href=\"index.php?module=config-settings&action=change&gid=".$settings_group['gid']."\"><img src=\"./styles/default/images/icons/custom.png\" title=\"".$db->escape_string($lang->setting_group_moderatefirstpost)."\" alt=\"settings_icon\" width=\"16\" height=\"16\" /></a></span>" .$info['description'];
+            $info['description'] = "<span class=\"float_right\"><a href=\"index.php?module=config-settings&amp;action=change&amp;gid=".$settings_group['gid']."\"><img src=\"./styles/default/images/icons/custom.png\" title=\"".$db->escape_string($lang->setting_group_moderatefirstpost)."\" alt=\"settings_icon\" width=\"16\" height=\"16\" /></a></span>" .$info['description'];
         }
+    }
+
+    $installed_func = "moderatefirstpost_is_installed";
+
+    if(function_exists($installed_func) && $installed_func() != true)
+    {
+        $info['description'] = "<span class=\"float_right\"><a href=\"index.php?module=config-plugins&amp;action=deactivate&amp;plugin=moderatefirstpost&amp;delete=1&amp;my_post_key={$mybb->post_code}\"><img src=\"./styles/default/images/icons/delete.png\" title=\"".$db->escape_string($lang->delete_moderatefirstpost_link)."\" alt=\"settings_icon\" width=\"16\" height=\"16\" /></a></span>" .$info['description'];
     }
 
     return $info;
@@ -212,5 +220,87 @@ function moderatefirstpost_run()
     {
         $mybb->user['moderateposts'] = 1;
         $lang->moderation_user_posts = $lang->moderation_user_posts . $lang->moderatefirstpost_moderation_user_posts;
+    }
+}
+
+function moderatefirstpost_delete_plugin()
+{
+    global $mybb;
+    if (!$mybb->get_input('delete'))
+    {
+        return;
+    }
+
+    if($mybb->get_input('delete') == 1)
+    {
+        global $lang;
+        $lang->load('moderatefirstpost', true);
+        $codename = str_replace('.php', '', basename(__FILE__));
+
+        $installed_func = "{$codename}_is_installed";
+
+        if(function_exists($installed_func) && $installed_func() != false)
+        {
+            flash_message($lang->moderatefirstpost_still_installed, 'error');
+            admin_redirect('index.php?module=config-plugins');
+            exit;
+        }
+
+        if($mybb->request_method != 'post')
+        {
+            global $page;
+            $page->output_confirm_action("index.php?module=config-plugins&amp;action=deactivate&amp;plugin={$codename}&amp;delete=1&amp;my_post_key={$mybb->post_code}", $lang->moderatefirstpost_delete_confirm_message, $lang->moderatefirstpost_delete_confirm);
+        }
+
+        if(!isset($mybb->input['no']))
+        {
+            global $message;
+
+            if(($handle = @fopen(MYBB_ROOT . "inc/plugins/pluginstree/" . $codename . ".csv", "r")) !== FALSE)
+            {
+                while(($pluginfiles = fgetcsv($handle, 1000, ",")) !== FALSE)
+                {
+                    foreach($pluginfiles as $file)
+                    {
+                        $filepath = MYBB_ROOT.$file;
+
+                        if(@file_exists($filepath))
+                        {
+                            if(is_file($filepath))
+                            {
+                                @unlink($filepath);
+                            }
+                            elseif(is_dir($filepath))
+                            {
+                                $dirfiles = array_diff(@scandir($filepath), array('.','..'));
+                                if(empty($dirfiles))
+                                {
+                                    @rmdir($filepath);
+                                }
+                            }
+                            else
+                            {
+                                continue;
+                            }
+                        }
+                    }
+                }
+                @fclose($handle);
+                @unlink(MYBB_ROOT . "inc/plugins/pluginstree/" . $codename . ".csv");
+
+                $message = $lang->moderatefirstpost_delete_message;
+            }
+            else
+            {
+                flash_message($lang->moderatefirstpost_undelete_message, 'error');
+                admin_redirect('index.php?module=config-plugins');
+                exit;
+            }
+        }
+        else
+        {
+            admin_redirect('index.php?module=config-plugins');
+            exit;
+        }
     }
 }

@@ -23,3 +23,11 @@ $l['setting_moderatefirstpost_forums_type_2'] = "Individuelle Moderation in jede
 
 // Forum
 $l['moderatefirstpost_moderation_user_posts'] = "<br/>Diese Vorgehensweise haben wir aus Spamschutzgründen voreingestellt.<br/>Sobald der erste Beitrag von dir im Forum sichtbar ist, wird diese Kontrolloption automatisch deaktiviert.";
+
+// Plugin Delete Action
+$l['delete_moderatefirstpost_link'] = "Plugin Dateien löschen";
+$l['moderatefirstpost_delete_confirm'] = "Plugin Löschung ausführen?";
+$l['moderatefirstpost_delete_confirm_message'] = "Willst du die Plugin Dateien endgültig und vollständig vom Server löschen?";
+$l['moderatefirstpost_delete_message'] = "Die Plugin Dateien wurden vollständig vom Server entfernt.";
+$l['moderatefirstpost_undelete_message'] = "Die Plugin Dateien konnten nicht gelöscht werden, da ein Problem mit der benötigten CSV Datei besteht!";
+$l['moderatefirstpost_still_installed'] = "Das Plugin ist noch installiert und muss vor dem Löschen erst deinstalliert werden!";
