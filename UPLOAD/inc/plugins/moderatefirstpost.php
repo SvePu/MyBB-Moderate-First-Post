@@ -1,4 +1,5 @@
 <?php
+
 /**
  * MyBB 1.8 Plugin - MyBB Moderate First Post
  * Copyright 2022 SvePu, All Rights Reserved
@@ -8,16 +9,16 @@
  *
  */
 
-if(!defined("IN_MYBB"))
+if (!defined("IN_MYBB"))
 {
     die("Direct initialization of this file is not allowed.");
 }
 
-if(defined('IN_ADMINCP'))
+if (defined('IN_ADMINCP'))
 {
     $plugins->add_hook("admin_config_plugins_deactivate_commit", 'moderatefirstpost_delete_plugin');
-    $plugins->add_hook("admin_config_settings_begin",'moderatefirstpost_settings_page');
-    $plugins->add_hook("admin_page_output_footer",'moderatefirstpost_settings_peeker');
+    $plugins->add_hook("admin_config_settings_begin", 'moderatefirstpost_settings_page');
+    $plugins->add_hook("admin_page_output_footer", 'moderatefirstpost_settings_peeker');
 }
 else
 {
@@ -37,29 +38,29 @@ function moderatefirstpost_info()
     $info = array(
         'name'          => $db->escape_string($lang->moderatefirstpost),
         'description'   => $db->escape_string($lang->moderatefirstpost_desc),
-        "website"       => "https://github.com/SvePu/MyBB-Moderate-First-Post",
-        "author"        => "SvePu",
-        "authorsite"    => "https://github.com/SvePu",
-        "version"       => "1.2",
-        "codename"      => "moderatefirstpost",
-        "compatibility" => "18*"
+        'website'       => "https://github.com/SvePu/MyBB-Moderate-First-Post",
+        'author'        => "SvePu",
+        'authorsite'    => "https://github.com/SvePu",
+        'version'       => "1.2",
+        'codename'      => "moderatefirstpost",
+        'compatibility' => "18*"
     );
 
-    if(is_array($plugins_cache) && is_array($plugins_cache['active']) && $plugins_cache['active']['moderatefirstpost'])
+    if (is_array($plugins_cache) && is_array($plugins_cache['active']) && $plugins_cache['active']['moderatefirstpost'])
     {
         $gid_result = $db->simple_select('settinggroups', 'gid', "name = 'moderatefirstpost'", array('limit' => 1));
         $settings_group = $db->fetch_array($gid_result);
-        if(!empty($settings_group['gid']))
+        if (!empty($settings_group['gid']))
         {
-            $info['description'] = "<span class=\"float_right\"><a href=\"index.php?module=config-settings&amp;action=change&amp;gid=".$settings_group['gid']."\"><img src=\"./styles/default/images/icons/custom.png\" title=\"".$db->escape_string($lang->setting_group_moderatefirstpost)."\" alt=\"settings_icon\" width=\"16\" height=\"16\" /></a></span>" .$info['description'];
+            $info['description'] = "<span class=\"float_right\"><a href=\"index.php?module=config-settings&amp;action=change&amp;gid=" . $settings_group['gid'] . "\"><img src=\"./styles/default/images/icons/custom.png\" title=\"" . $db->escape_string($lang->setting_group_moderatefirstpost) . "\" alt=\"settings_icon\" width=\"16\" height=\"16\" /></a></span>" . $info['description'];
         }
     }
 
     $installed_func = "moderatefirstpost_is_installed";
 
-    if(function_exists($installed_func) && $installed_func() != true)
+    if (function_exists($installed_func) && $installed_func() != true)
     {
-        $info['description'] = "<span class=\"float_right\"><a href=\"index.php?module=config-plugins&amp;action=deactivate&amp;plugin=moderatefirstpost&amp;delete=1&amp;my_post_key={$mybb->post_code}\"><img src=\"./styles/default/images/icons/delete.png\" title=\"".$db->escape_string($lang->delete_moderatefirstpost_link)."\" alt=\"settings_icon\" width=\"16\" height=\"16\" /></a></span>" .$info['description'];
+        $info['description'] = "<span class=\"float_right\"><a href=\"index.php?module=config-plugins&amp;action=deactivate&amp;plugin=moderatefirstpost&amp;delete=1&amp;my_post_key={$mybb->post_code}\"><img src=\"./styles/default/images/icons/delete.png\" title=\"" . $db->escape_string($lang->delete_moderatefirstpost_link) . "\" alt=\"settings_icon\" width=\"16\" height=\"16\" /></a></span>" . $info['description'];
     }
 
     return $info;
@@ -70,48 +71,53 @@ function moderatefirstpost_install()
     global $db, $lang;
     $lang->load('moderatefirstpost', true);
 
-    $query = $db->simple_select("settinggroups", "COUNT(*) AS disporder");
-    $disporder = $db->fetch_field($query, "disporder");
+    $query = $db->simple_select('settinggroups', 'MAX(disporder) AS disporder');
+    $disporder = (int)$db->fetch_field($query, 'disporder');
 
     $setting_group = array(
         'name' => 'moderatefirstpost',
-        "title" => $db->escape_string($lang->setting_group_moderatefirstpost),
-        "description" => $db->escape_string($lang->setting_group_moderatefirstpost_desc),
-        'disporder' => $disporder+1,
+        'title' => $db->escape_string($lang->setting_group_moderatefirstpost),
+        'description' => $db->escape_string($lang->setting_group_moderatefirstpost_desc),
         'isdefault' => 0
     );
 
-    $gid = $db->insert_query("settinggroups", $setting_group);
+    $setting_group['disporder'] = ++$disporder;
 
-    $setting_array = array(
-        'moderatefirstpost_enable' => array(
-            'title' => $db->escape_string($lang->setting_moderatefirstpost_enable),
-            'description' => $db->escape_string($lang->setting_moderatefirstpost_enable_desc),
+    $gid = (int)$db->insert_query('settinggroups', $setting_group);
+
+    $settings = array(
+        'enable' => array(
             'optionscode' => 'yesno',
-            'value' => 1,
-            'disporder' => 1
+            'value' => 1
         ),
-        'moderatefirstpost_forums' => array(
-            'title' => $db->escape_string($lang->setting_moderatefirstpost_forums),
-            'description' => $db->escape_string($lang->setting_moderatefirstpost_forums_desc),
+        'forums' => array(
             'optionscode' => 'forumselect',
-            'value' => '-1',
-            'disporder' => 2
+            'value' => '-1'
         ),
-        'moderatefirstpost_forums_type' => array(
-            'title' => $db->escape_string($lang->setting_moderatefirstpost_forums_type),
-            'description' => $db->escape_string($lang->setting_moderatefirstpost_forums_type_desc),
-            'optionscode' => 'radio \n1='. $db->escape_string($lang->setting_moderatefirstpost_forums_type_1). '\n2='. $db->escape_string($lang->setting_moderatefirstpost_forums_type_2),
-            'value' => '1',
-            'disporder' => 3
+        'forums_type' => array(
+            'optionscode' => 'radio \n1=' . $db->escape_string($lang->setting_moderatefirstpost_forums_type_1) . '\n2=' . $db->escape_string($lang->setting_moderatefirstpost_forums_type_2),
+            'value' => '1'
         )
     );
 
-    foreach($setting_array as $name => $setting)
+    $disporder = 0;
+
+    foreach ($settings as $name => $setting)
     {
-        $setting['name'] = $name;
+        $name = "moderatefirstpost_{$name}";
+
+        $setting['name'] = $db->escape_string($name);
+
+        $lang_var_title = "setting_{$name}";
+        $lang_var_description = "setting_{$name}_desc";
+
+        $setting['title'] = $db->escape_string($lang->{$lang_var_title});
+        $setting['description'] = $db->escape_string($lang->{$lang_var_description});
+        $setting['disporder'] = $disporder;
         $setting['gid'] = $gid;
+
         $db->insert_query('settings', $setting);
+        ++$disporder;
     }
 
     rebuild_settings();
@@ -120,7 +126,7 @@ function moderatefirstpost_install()
 function moderatefirstpost_is_installed()
 {
     global $mybb;
-    if(isset($mybb->settings['moderatefirstpost_enable']))
+    if (isset($mybb->settings['moderatefirstpost_enable']))
     {
         return true;
     }
@@ -129,27 +135,20 @@ function moderatefirstpost_is_installed()
 
 function moderatefirstpost_uninstall()
 {
-    global $db, $mybb;
+    global $db;
 
-    $query = $db->simple_select("settinggroups", "gid", "name='moderatefirstpost'");
-    $gid = $db->fetch_field($query, "gid");
-    if(!$gid)
-    {
-        return;
-    }
     $db->delete_query("settinggroups", "name='moderatefirstpost'");
-    $db->delete_query("settings", "gid=$gid");
+    $db->delete_query("settings", "name LIKE 'moderatefirstpost_%'");
+
     rebuild_settings();
 }
 
 function moderatefirstpost_activate()
 {
-
 }
 
 function moderatefirstpost_deactivate()
 {
-
 }
 
 function moderatefirstpost_settings_page()
@@ -164,7 +163,7 @@ function moderatefirstpost_settings_page()
 function moderatefirstpost_settings_peeker()
 {
     global $mfp_settings_peeker;
-    if($mfp_settings_peeker)
+    if ($mfp_settings_peeker)
     {
         echo '<script type="text/javascript">
         $(document).ready(function(){
@@ -180,30 +179,30 @@ function moderatefirstpost_run()
     global $mybb, $fid, $lang;
     $lang->load('moderatefirstpost');
 
-    if(!$mybb->user['uid'] || $mybb->usergroup['canmodcp'] == 1 || $mybb->settings['moderatefirstpost_enable'] != 1 || $mybb->settings['moderatefirstpost_forums'] == '')
+    if (!$mybb->user['uid'] || $mybb->usergroup['canmodcp'] == 1 || $mybb->settings['moderatefirstpost_enable'] != 1 || $mybb->settings['moderatefirstpost_forums'] == '')
     {
         return;
     }
 
-    if($mybb->settings['moderatefirstpost_forums'] == '-1' && $mybb->user['postnum'] < 1)
+    if ($mybb->settings['moderatefirstpost_forums'] == '-1' && $mybb->user['postnum'] < 1)
     {
         $moderatefirstpost = true;
     }
-    elseif($mybb->settings['moderatefirstpost_forums'] != '-1' && in_array($fid, explode(',', $mybb->settings['moderatefirstpost_forums'])))
+    elseif ($mybb->settings['moderatefirstpost_forums'] != '-1' && in_array($fid, explode(',', $mybb->settings['moderatefirstpost_forums'])))
     {
         global $db;
-        $mfp_cache=array();
+        $mfp_cache = array();
         $query = $db->simple_select("posts", "fid, pid", "fid IN ({$mybb->settings['moderatefirstpost_forums']}) AND uid='{$mybb->user['uid']}' AND visible=1");
-        while($result=$db->fetch_array($query))
+        while ($result = $db->fetch_array($query))
         {
             $mfp_cache[$result['fid']][] = $result['pid'];
         }
-        if(!array_key_exists($fid, $mfp_cache))
+        if (!array_key_exists($fid, $mfp_cache))
         {
             $moderatefirstpost = true;
-            if($mybb->settings['moderatefirstpost_forums_type'] != "2")
+            if ($mybb->settings['moderatefirstpost_forums_type'] != "2")
             {
-                if(!empty($mfp_cache))
+                if (!empty($mfp_cache))
                 {
                     $moderatefirstpost = false;
                 }
@@ -216,7 +215,7 @@ function moderatefirstpost_run()
         $moderatefirstpost = false;
     }
 
-    if($moderatefirstpost)
+    if ($moderatefirstpost)
     {
         $mybb->user['moderateposts'] = 1;
         $lang->moderation_user_posts = $lang->moderation_user_posts . $lang->moderatefirstpost_moderation_user_posts;
@@ -231,7 +230,7 @@ function moderatefirstpost_delete_plugin()
         return;
     }
 
-    if($mybb->get_input('delete') == 1)
+    if ($mybb->get_input('delete') == 1)
     {
         global $lang;
         $lang->load('moderatefirstpost', true);
@@ -239,41 +238,41 @@ function moderatefirstpost_delete_plugin()
 
         $installed_func = "{$codename}_is_installed";
 
-        if(function_exists($installed_func) && $installed_func() != false)
+        if (function_exists($installed_func) && $installed_func() != false)
         {
             flash_message($lang->moderatefirstpost_still_installed, 'error');
             admin_redirect('index.php?module=config-plugins');
             exit;
         }
 
-        if($mybb->request_method != 'post')
+        if ($mybb->request_method != 'post')
         {
             global $page;
             $page->output_confirm_action("index.php?module=config-plugins&amp;action=deactivate&amp;plugin={$codename}&amp;delete=1&amp;my_post_key={$mybb->post_code}", $lang->moderatefirstpost_delete_confirm_message, $lang->moderatefirstpost_delete_confirm);
         }
 
-        if(!isset($mybb->input['no']))
+        if (!isset($mybb->input['no']))
         {
             global $message;
 
-            if(($handle = @fopen(MYBB_ROOT . "inc/plugins/pluginstree/" . $codename . ".csv", "r")) !== FALSE)
+            if (($handle = @fopen(MYBB_ROOT . "inc/plugins/pluginstree/" . $codename . ".csv", "r")) !== FALSE)
             {
-                while(($pluginfiles = fgetcsv($handle, 1000, ",")) !== FALSE)
+                while (($pluginfiles = fgetcsv($handle, 1000, ",")) !== FALSE)
                 {
-                    foreach($pluginfiles as $file)
+                    foreach ($pluginfiles as $file)
                     {
-                        $filepath = MYBB_ROOT.$file;
+                        $filepath = MYBB_ROOT . $file;
 
-                        if(@file_exists($filepath))
+                        if (@file_exists($filepath))
                         {
-                            if(is_file($filepath))
+                            if (is_file($filepath))
                             {
                                 @unlink($filepath);
                             }
-                            elseif(is_dir($filepath))
+                            elseif (is_dir($filepath))
                             {
-                                $dirfiles = array_diff(@scandir($filepath), array('.','..'));
-                                if(empty($dirfiles))
+                                $dirfiles = array_diff(@scandir($filepath), array('.', '..'));
+                                if (empty($dirfiles))
                                 {
                                     @rmdir($filepath);
                                 }
