@@ -18,7 +18,7 @@ if (defined('IN_ADMINCP'))
 {
     $plugins->add_hook("admin_config_plugins_deactivate_commit", 'moderatefirstpost_delete_plugin');
     $plugins->add_hook("admin_config_settings_begin", 'moderatefirstpost_settings_page');
-    $plugins->add_hook("admin_page_output_footer", 'moderatefirstpost_settings_peeker');
+    $plugins->add_hook("admin_settings_print_peekers", 'moderatefirstpost_settings_peekers');
 }
 else
 {
@@ -46,7 +46,7 @@ function moderatefirstpost_info()
         'compatibility' => "18*"
     );
 
-    if (is_array($plugins_cache) && is_array($plugins_cache['active']) && $plugins_cache['active']['moderatefirstpost'])
+    if (is_array($plugins_cache) && is_array($plugins_cache['active']) && isset($plugins_cache['active']['moderatefirstpost']))
     {
         $gid_result = $db->simple_select('settinggroups', 'gid', "name = 'moderatefirstpost'", array('limit' => 1));
         $settings_group = $db->fetch_array($gid_result);
@@ -153,25 +153,14 @@ function moderatefirstpost_deactivate()
 
 function moderatefirstpost_settings_page()
 {
-    global $db, $mybb, $lang, $mfp_settings_peeker;
+    global $lang;
     $lang->load('moderatefirstpost', true);
-    $query = $db->simple_select("settinggroups", "gid", "name='moderatefirstpost'", array('limit' => 1));
-    $group = $db->fetch_array($query);
-    $mfp_settings_peeker = ($mybb->input["gid"] == $group["gid"]) && ($mybb->request_method != "post");
 }
 
-function moderatefirstpost_settings_peeker()
+function moderatefirstpost_settings_peekers(&$peekers)
 {
-    global $mfp_settings_peeker;
-    if ($mfp_settings_peeker)
-    {
-        echo '<script type="text/javascript">
-        $(document).ready(function(){
-            new Peeker($(".setting_moderatefirstpost_enable"), $("#row_setting_moderatefirstpost_forums, #row_setting_moderatefirstpost_forums_type"), 1, true),
-            new Peeker($(".setting_moderatefirstpost_forums_forums_groups_check"), $("#row_setting_moderatefirstpost_forums_type"), "custom", true);
-        });
-        </script>';
-    }
+    $peekers[] = 'new Peeker($(".setting_moderatefirstpost_enable"), $("#row_setting_moderatefirstpost_forums, #row_setting_moderatefirstpost_forums_type"), 1, true)';
+    $peekers[] = 'new Peeker($(".setting_moderatefirstpost_forums_forums_groups_check"), $("#row_setting_moderatefirstpost_forums_type"), "custom", true)';
 }
 
 function moderatefirstpost_run()
@@ -215,10 +204,21 @@ function moderatefirstpost_run()
         $moderatefirstpost = false;
     }
 
-    if ($moderatefirstpost)
+    if (isset($moderatefirstpost) && $moderatefirstpost !== false)
     {
+        global $db;
         $mybb->user['moderateposts'] = 1;
-        $lang->moderation_user_posts = $lang->moderation_user_posts . $lang->moderatefirstpost_moderation_user_posts;
+
+        switch ($mybb->settings['moderatefirstpost_forums_type'])
+        {
+            case 1:
+                $where = $db->escape_string($lang->moderatefirstpost_moderation_user_posts_global);
+                break;
+            case 2:
+                $where = $db->escape_string($lang->moderatefirstpost_moderation_user_posts_individual);
+                break;
+        }
+        $lang->moderation_user_posts .= $lang->sprintf($db->escape_string($lang->moderatefirstpost_moderation_user_posts), $where);
     }
 }
 

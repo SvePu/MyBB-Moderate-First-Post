@@ -22,7 +22,9 @@ $l['setting_moderatefirstpost_forums_type_1'] = "Universelle Moderation unabhän
 $l['setting_moderatefirstpost_forums_type_2'] = "Individuelle Moderation in jedem Forum";
 
 // Forum
-$l['moderatefirstpost_moderation_user_posts'] = "<br/>Diese Vorgehensweise haben wir aus Spamschutzgründen voreingestellt.<br/>Sobald der erste Beitrag von dir im Forum sichtbar ist, wird diese Kontrolloption automatisch deaktiviert.";
+$l['moderatefirstpost_moderation_user_posts'] = "<br/>Diese Vorgehensweise haben wir aus Spamschutzgründen voreingestellt.<br/>Sobald der erste Beitrag von dir {1} sichtbar ist, wird diese Kontrolloption automatisch deaktiviert.";
+$l['moderatefirstpost_moderation_user_posts_global'] = "im Forum";
+$l['moderatefirstpost_moderation_user_posts_individual'] = "in diesem Unterforum";
 
 // Plugin Delete Action
 $l['delete_moderatefirstpost_link'] = "Plugin Dateien löschen";

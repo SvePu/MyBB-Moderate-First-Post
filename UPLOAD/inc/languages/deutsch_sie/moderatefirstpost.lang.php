@@ -13,7 +13,7 @@ $l['moderatefirstpost_desc'] = "Dieses Plugin erzwingt die Moderation des ersten
 $l['setting_group_moderatefirstpost'] = "Moderate First Post Einstellungen";
 $l['setting_group_moderatefirstpost_desc'] = "Einstellungen des Moderate First Post Plugins";
 $l['setting_moderatefirstpost_enable'] = "Moderate First Post Plugin Aktivieren?";
-$l['setting_moderatefirstpost_enable_desc'] = "Wähle Sie JA, um die Funktionen des Moderate First Post Plugins zu aktivieren!";
+$l['setting_moderatefirstpost_enable_desc'] = "Wählen Sie JA, um die Funktionen des Moderate First Post Plugins zu aktivieren!";
 $l['setting_moderatefirstpost_forums'] = "Forenauswahl";
 $l['setting_moderatefirstpost_forums_desc'] = "Wählen Sie die Foren aus, in denen der erste Benutzerbeitrag moderiert werden soll!";
 $l['setting_moderatefirstpost_forums_type'] = "Art der Moderation";
@@ -22,7 +22,10 @@ $l['setting_moderatefirstpost_forums_type_1'] = "Universelle Moderation unabhän
 $l['setting_moderatefirstpost_forums_type_2'] = "Individuelle Moderation in jedem Forum";
 
 // Forum
-$l['moderatefirstpost_moderation_user_posts'] = "<br/>Diese Vorgehensweise haben wir aus Spamschutzgründen voreingestellt.<br/>Sobald der erste Beitrag von dir im Forum sichtbar ist, wird diese Kontrolloption automatisch deaktiviert.";
+$l['moderatefirstpost_moderation_user_posts'] = "<br/>Diese Vorgehensweise haben wir aus Spamschutzgründen voreingestellt.<br/>Sobald der erste Beitrag von Ihnen {1} sichtbar ist, wird diese Kontrolloption automatisch deaktiviert.";
+$l['moderatefirstpost_moderation_user_posts_global'] = "im Forum";
+$l['moderatefirstpost_moderation_user_posts_individual'] = "in diesem Unterforum";
+
 
 // Plugin Delete Action
 $l['delete_moderatefirstpost_link'] = "Plugin Dateien löschen";
